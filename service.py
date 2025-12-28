@@ -1,29 +1,33 @@
-from fastapi import APIRouter, Body
-from models import Post, Comment
-import data as service
+from fastapi import APIRouter, Body, Depends
+from sqlalchemy.orm import Session
+import schemas, database
+import crud as service
+
+def get_db():
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 router = APIRouter(prefix='/posts')
 
 @router.get("/")
-def get_posts() -> list[Post]:
-    return service.get_posts()
+def get_posts(db: Session=Depends(get_db)) -> list[schemas.PostResponse]:
+    return service.get_posts(db)
 
 @router.get("/{id}")
-def get_post(id: int) -> Post:
-    return service.get_post(id)
+def get_post(id: int, db: Session=Depends(get_db)) -> schemas.PostResponse:
+    return service.get_post(db, id)
 
 @router.post("/")
-def create(title:str=Body(..., embed=True), content: str=Body(..., embed=True)):
-    return service.create_post(title, content)
+def create(post: schemas.PostCreate, db: Session=Depends(get_db)):
+    return service.create_post(db, post)
 
 @router.get("/{post_id}/comment")
-def get_comments(post_id: int) -> list[Comment] | dict:
-    return service.get_comments(post_id)
+def get_comments(post_id: int, db:Session=Depends(get_db)) -> list[schemas.CommentResponse] | dict:
+    return service.get_comments(db, post_id)
 
 @router.post("/{post_id}/comment")
-def create_comment(post_id: int, content: str=Body(..., embed=True)):
-    return service.create_comment(post_id, content)
-
-# @router.post("/{post_id}/comment")
-# def create_comment(comment: Comment) -> Comment:
-#     return c_service.create(comment)
+def create_comment(post_id: int, comment: schemas.CommentCreate, db: Session=Depends(get_db)):
+    return service.create_comment(db, comment, post_id)

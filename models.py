@@ -1,14 +1,26 @@
-from pydantic import BaseModel, Field
+from sqlalchemy import Column, Integer, String, ForeignKey, Date
+from database import Base
 from datetime import date
 
-class Post(BaseModel):
-    id : int
-    title : str = Field(max_length=30, description="게시글 제목")
-    content : str
-    create_date : date = Field(default=date.today(), description="게시글 작성 날짜")
+class Post(Base):
+    __tablename__ = "posts"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String)
+    content = Column(String)
+    create_date = Column(Date, default=date.today())
 
-class Comment(BaseModel):
-    id : int
-    content : str = Field(max_length=200, description="댓글 내용")
-    create_date : date = Field(default=date.today(), description="댓글 작성 날짜")
-    post : int
+    def __repr__(self):
+        """객체를 문자열로 표현할 때 사용"""
+        return f"Post(id = {self.id}, title = {self.title}, content = {self.content}, create_date = {self.create_date})"
+
+class Comment(Base):
+    __tablename__ = "comments"
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(String)
+    create_date = Column(Date, default=date.today())
+    post = Column(Integer, ForeignKey('posts.id', ondelete='CASCADE'))
+
+    def __repr__(self):
+        """객체를 문자열로 표현할 때 사용"""
+        return f"Comment(id = {self.id}, content = {self.content}, create_date = {self.create_date}, post = {self.post})"
+
